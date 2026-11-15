@@ -389,76 +389,77 @@ void drawMenu() {
 /* ============================================================
  *  cat face (full screen, animated)
  * ============================================================ */
-uint32_t catNextBlink = 0;
-uint32_t catBlinkUntil = 0;
-uint32_t catNextGaze  = 0;
-int8_t   catGazeX = 0;
-int8_t   catGazeY = 0;
+// Lucy AI face animation state. Kept local to the OLED renderer.
+uint32_t aiNextBlink = 0;
+uint32_t aiBlinkUntil = 0;
+uint32_t aiNextGaze = 0;
+int8_t aiGazeX = 0;
+int8_t aiGazeY = 0;
 
 void drawCat() {
-  uint32_t now = millis();
+  const uint32_t now = millis();
 
-  // --- animation state ---
-  bool blink = (now < catBlinkUntil);
-  if (now >= catNextBlink) {
-    catNextBlink  = now + random(2200, 7000);
-    catBlinkUntil = now + 400;
-    blink = true;
+  if (now >= aiNextBlink) {
+    aiNextBlink = now + (uint32_t)random(2800, 6200);
+    aiBlinkUntil = now + 150;
   }
-  if (now >= catNextGaze) {
-    catNextGaze = now + random(900, 2600);
-    catGazeX = (int8_t)random(-2, 3);
-    catGazeY = (int8_t)random(-1, 2);
+  if (now >= aiNextGaze) {
+    aiNextGaze = now + (uint32_t)random(700, 1900);
+    aiGazeX = (int8_t)random(-3, 4);
+    aiGazeY = (int8_t)random(-2, 3);
   }
 
-  // --- whiskers (drawn first, so the face hides their roots) ---
-  oled.drawLine(20, 38, 2, 31, SSD1306_WHITE);
-  oled.drawLine(20, 44, 1, 44, SSD1306_WHITE);
-  oled.drawLine(20, 50, 3, 56, SSD1306_WHITE);
-  oled.drawLine(108, 38, 126, 31, SSD1306_WHITE);
-  oled.drawLine(108, 44, 127, 44, SSD1306_WHITE);
-  oled.drawLine(108, 50, 125, 56, SSD1306_WHITE);
+  const bool blink = now < aiBlinkUntil;
+  const int bob = (int)(sinf((float)now * 0.0022f) * 1.0f);
 
-  // --- ears ---
-  oled.fillTriangle(22, 27, 30, 0, 55, 20, SSD1306_WHITE);
-  oled.fillTriangle(106, 27, 98, 0, 73, 20, SSD1306_WHITE);
-  oled.fillTriangle(32, 23, 35, 7, 47, 19, SSD1306_BLACK);
-  oled.fillTriangle(96, 23, 93, 7, 81, 19, SSD1306_BLACK);
+  // Outer 3D halo and four small HUD markers.
+  oled.drawRoundRect(27, 3 + bob, 74, 58, 19, SSD1306_WHITE);
+  oled.drawRoundRect(30, 5 + bob, 68, 54, 16, SSD1306_WHITE);
+  oled.drawLine(8, 31, 18, 31, SSD1306_WHITE);
+  oled.drawLine(110, 31, 120, 31, SSD1306_WHITE);
+  oled.drawPixel(13, 26, SSD1306_WHITE);
+  oled.drawPixel(115, 26, SSD1306_WHITE);
+  oled.drawPixel(13, 36, SSD1306_WHITE);
+  oled.drawPixel(115, 36, SSD1306_WHITE);
 
-  // --- head ---
-  oled.fillRoundRect(20, 10, 88, 52, 24, SSD1306_WHITE);
+  // Side modules give the head a layered, dimensional silhouette.
+  oled.fillRoundRect(19, 22 + bob, 12, 23, 4, SSD1306_WHITE);
+  oled.fillRoundRect(97, 22 + bob, 12, 23, 4, SSD1306_WHITE);
+  oled.fillRoundRect(22, 26 + bob, 6, 15, 2, SSD1306_BLACK);
+  oled.fillRoundRect(100, 26 + bob, 6, 15, 2, SSD1306_BLACK);
 
-  // --- tabby stripes on the forehead ---
-  oled.drawLine(55, 12, 55, 19, SSD1306_BLACK);
-  oled.drawLine(64, 11, 64, 19, SSD1306_BLACK);
-  oled.drawLine(73, 12, 73, 19, SSD1306_BLACK);
+  // Face plate with a recessed inner panel and a small top crest.
+  oled.fillRoundRect(31, 12 + bob, 66, 46, 14, SSD1306_WHITE);
+  oled.fillRoundRect(35, 16 + bob, 58, 38, 11, SSD1306_BLACK);
+  oled.drawRoundRect(35, 16 + bob, 58, 38, 11, SSD1306_WHITE);
+  oled.drawLine(53, 9 + bob, 64, 5 + bob, SSD1306_WHITE);
+  oled.drawLine(64, 5 + bob, 75, 9 + bob, SSD1306_WHITE);
+  oled.fillCircle(64, 8 + bob, 2, SSD1306_WHITE);
 
-  // --- eyes ---
+  // Brow ridge and expressive eyes.
+  oled.drawLine(42, 24 + bob, 56, 21 + bob, SSD1306_WHITE);
+  oled.drawLine(72, 21 + bob, 86, 24 + bob, SSD1306_WHITE);
   if (!blink) {
-    oled.fillCircle(46, 33, 8, SSD1306_BLACK);
-    oled.fillCircle(82, 33, 8, SSD1306_BLACK);
-    // pupils follow the gaze, with a highlight dot
-    oled.fillCircle(46 + catGazeX, 33 + catGazeY, 3, SSD1306_WHITE);
-    oled.fillCircle(82 + catGazeX, 33 + catGazeY, 3, SSD1306_WHITE);
-    oled.fillCircle(50 + catGazeX, 30 + catGazeY, 1, SSD1306_WHITE);
-    oled.fillCircle(86 + catGazeX, 30 + catGazeY, 1, SSD1306_WHITE);
+    oled.fillRoundRect(41, 27 + bob, 18, 15, 6, SSD1306_WHITE);
+    oled.fillRoundRect(69, 27 + bob, 18, 15, 6, SSD1306_WHITE);
+    oled.fillCircle(50 + aiGazeX, 34 + bob + aiGazeY, 5, SSD1306_BLACK);
+    oled.fillCircle(78 + aiGazeX, 34 + bob + aiGazeY, 5, SSD1306_BLACK);
+    oled.fillCircle(52 + aiGazeX, 31 + bob + aiGazeY, 1, SSD1306_WHITE);
+    oled.fillCircle(80 + aiGazeX, 31 + bob + aiGazeY, 1, SSD1306_WHITE);
   } else {
-    // closed eyes: a shallow lash line inside a white "eyelid"
-    oled.fillRect(36, 23, 20, 19, SSD1306_WHITE);
-    oled.fillRect(72, 23, 20, 19, SSD1306_WHITE);
-    oled.fillRect(39, 33, 14, 2, SSD1306_BLACK);
-    oled.fillRect(75, 33, 14, 2, SSD1306_BLACK);
+    oled.drawLine(42, 35 + bob, 58, 35 + bob, SSD1306_WHITE);
+    oled.drawLine(70, 35 + bob, 86, 35 + bob, SSD1306_WHITE);
   }
 
-  // --- nose ---
-  oled.fillTriangle(59, 44, 69, 44, 64, 51, SSD1306_BLACK);
-
-  // --- mouth ---
-  oled.drawLine(64, 51, 64, 54, SSD1306_BLACK);
-  oled.drawLine(63, 54, 58, 57, SSD1306_BLACK);
-  oled.drawLine(58, 57, 54, 55, SSD1306_BLACK);
-  oled.drawLine(65, 54, 70, 57, SSD1306_BLACK);
-  oled.drawLine(70, 57, 74, 55, SSD1306_BLACK);
+  // Nose bridge, animated-looking friendly mouth, and lower chin facets.
+  oled.drawLine(64, 37 + bob, 61, 43 + bob, SSD1306_WHITE);
+  oled.drawLine(61, 43 + bob, 67, 43 + bob, SSD1306_WHITE);
+  oled.drawLine(52, 48 + bob, 58, 50 + bob, SSD1306_WHITE);
+  oled.drawLine(58, 50 + bob, 64, 51 + bob, SSD1306_WHITE);
+  oled.drawLine(64, 51 + bob, 70, 50 + bob, SSD1306_WHITE);
+  oled.drawLine(70, 50 + bob, 76, 48 + bob, SSD1306_WHITE);
+  oled.drawLine(43, 55 + bob, 55, 58 + bob, SSD1306_WHITE);
+  oled.drawLine(73, 58 + bob, 85, 55 + bob, SSD1306_WHITE);
 
   flush();
 }
@@ -1232,7 +1233,7 @@ void loop() {
   }
 
   // ---- periodic redraw (cat animates faster than the info pages) ----
-  uint32_t interval = (inMenu ? 1000 : (page == 0 ? 350 : 1000));
+  uint32_t interval = (inMenu ? 1000 : (page == 0 ? 160 : 1000));
   if (millis() - lastDraw > interval) {
     lastDraw = millis();
     dirty = false;

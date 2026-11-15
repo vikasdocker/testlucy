@@ -126,3 +126,24 @@ AP+STA startup fails. It no longer runs an active Wi-Fi scan five seconds
 after boot, because that scan can temporarily interrupt hotspot beaconing.
 Serial Monitor at 115200 prints the AP start result, SSID, IP, channel, TX
 power and mode. The OLED wiring in the sketch is SDA GPIO7 / SCL GPIO6.
+
+## PlatformIO build (ESP32-C3 Super Mini)
+
+The project now includes a PlatformIO environment for the existing `C3Hotspot/C3Hotspot.ino` sketch.
+
+1. Open this repository folder in VS Code with the PlatformIO extension installed.
+2. Select environment **esp32-c3-supermini**.
+3. Build with **PlatformIO: Build**.
+4. Connect the ESP32-C3 Super Mini by USB and choose **PlatformIO: Upload**.
+5. Open **PlatformIO: Monitor** at 115200 baud.
+
+### OLED / wiring preserved
+
+- OLED VCC → 3V3
+- OLED GND → GND
+- OLED SCL → GPIO 7
+- OLED SDA → GPIO 6
+- I2C address: `0x3C`
+- Existing SH1106 1.3-inch panel offset and page-mode flush routine are retained.
+
+The OLED home page now renders Lucy's animated 3D-style monochrome AI face with blinking, gaze movement, a subtle idle bob, and a layered HUD/helmet outline. The existing hotspot, saved Wi-Fi credentials, AP+STA connection logic, captive portal, BOOT-button menu, and web routes are left intact.
