@@ -778,25 +778,56 @@ void handleDisplay() {
  *  AP start
  * ============================================================ */
 void startAP() {
-  WiFi.mode(WIFI_AP_STA);          // AP_STA so a home-WiFi link survives
+  // Conservative RF power is more reliable on some ESP32-C3 Super Mini clones.
+  WiFi.persistent(false);
   WiFi.setSleep(false);
-  WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1),
-                    IPAddress(255, 255, 255, 0));
-  WiFi.softAP(apSsid.c_str(), apPass.c_str(), AP_CHANNEL, AP_HIDDEN, AP_MAX_CLIENTS);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);   // make sure the SSID is easy to find
+  WiFi.mode(WIFI_AP_STA);
+  delay(250);
+  WiFi.setTxPower(WIFI_POWER_8_5dBm);
 
-  Serial.printf("AP radio: ssid='%s' ch=%u hidden=%d tx=%.1f dBm\n",
-                apSsid.c_str(), WiFi.channel(), (int)AP_HIDDEN,
-                WiFi.getTxPower() * 0.25);
+  bool configOk = WiFi.softAPConfig(IPAddress(192, 168, 4, 1),
+                                    IPAddress(192, 168, 4, 1),
+                                    IPAddress(255, 255, 255, 0));
+  delay(100);
+  bool apStarted = WiFi.softAP(apSsid.c_str(), apPass.c_str(),
+                               AP_CHANNEL, AP_HIDDEN, AP_MAX_CLIENTS);
 
+  // Fallback: keep the setup hotspot alive even if AP+STA fails on this clone.
+  if (!apStarted) {
+    Serial.println(F("WARN: AP+STA start failed; retrying AP-only"));
+    WiFi.mode(WIFI_AP);
+    delay(300);
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
+    configOk = WiFi.softAPConfig(IPAddress(192, 168, 4, 1),
+                                 IPAddress(192, 168, 4, 1),
+                                 IPAddress(255, 255, 255, 0));
+    delay(100);
+    apStarted = WiFi.softAP(apSsid.c_str(), apPass.c_str(),
+                            AP_CHANNEL, AP_HIDDEN, AP_MAX_CLIENTS);
+  }
+
+  apOn = apStarted;
+  Serial.printf("AP config: %s | AP start: %s\\n",
+                configOk ? "OK" : "FAILED", apStarted ? "OK" : "FAILED");
+  Serial.printf("AP radio: ssid='%s' ip=%s ch=%u hidden=%d tx=%.1f dBm mode=%d\\n",
+                apSsid.c_str(), WiFi.softAPIP().toString().c_str(),
+                WiFi.channel(), (int)AP_HIDDEN,
+                WiFi.getTxPower() * 0.25, (int)WiFi.getMode());
+
+  if (!apStarted) {
+    Serial.println(F("ERROR: hotspot did not start; check power, RF hardware and serial log."));
+    return;
+  }
+
+  dns.stop();
   dns.start(53, "*", WiFi.softAPIP());
   MDNS.end();
   MDNS.begin("hotspot");
 
   Serial.println(F("--- Hotspot running ---"));
-  Serial.printf("SSID : %s\n", apSsid.c_str());
-  Serial.printf("PASS : %s\n", apPass.c_str());
-  Serial.printf("URL  : http://%s/  (http://hotspot.local)\n",
+  Serial.printf("SSID : %s\\n", apSsid.c_str());
+  Serial.printf("PASS : %s\\n", apPass.c_str());
+  Serial.printf("URL  : http://%s/  (http://hotspot.local)\\n",
                 WiFi.softAPIP().toString().c_str());
   dirty = true;
 }
@@ -1117,20 +1148,14 @@ void loop() {
   dns.processNextRequest();
   server.handleClient();
 
-  // ---- one-shot radio self check: is our own SSID on the air? ----
+  // ---- one-shot radio status check; avoid active scan disrupting AP beacons ----
   if (selfCheckAt && millis() > selfCheckAt) {
     selfCheckAt = 0;
-    int n = WiFi.scanNetworks();
-    bool found = false;
-    for (int i = 0; i < n; i++) {
-      String s = String(WiFi.SSID(i));
-      if (s == apSsid) found = true;
-      Serial.printf("  scan %2d: '%s' ch%u %d dBm%s\n", i, s.c_str(),
-                    WiFi.channel(i), WiFi.RSSI(i), (s == apSsid) ? "  <== us" : "");
-    }
-    WiFi.scanDelete();
-    Serial.printf("SELFCHECK: own SSID %s (%d networks heard)\n",
-                  found ? "FOUND on air" : "MISSING from air", n);
+    Serial.printf("SELFCHECK: AP=%s SSID='%s' IP=%s clients=%u channel=%u tx=%.1f dBm mode=%d\\n",
+                  WiFi.softAPIP() == IPAddress(0, 0, 0, 0) ? "NO-IP" : "UP",
+                  apSsid.c_str(), WiFi.softAPIP().toString().c_str(),
+                  (unsigned)WiFi.softAPgetStationNum(), WiFi.channel(),
+                  WiFi.getTxPower() * 0.25, (int)WiFi.getMode());
   }
 
   // ---- deferred restart (after AP credential change / reboot) ----

@@ -116,3 +116,13 @@ Board: **Nologo ESP32C3 Super Mini**, *USB CDC On Boot: Enabled*. Sketch uses
   regulator is marginal when the OLED is also powered from it.
 - AP on/off is not persisted, so a reboot always brings the hotspot back (and a
   60 s guard restores it automatically if there is no home-WiFi uplink).
+
+
+## Wi-Fi broadcast troubleshooting (firmware patch)
+
+The current firmware starts AP+STA with a conservative 8.5 dBm TX power,
+checks the return value of `WiFi.softAP()`, and retries in AP-only mode if
+AP+STA startup fails. It no longer runs an active Wi-Fi scan five seconds
+after boot, because that scan can temporarily interrupt hotspot beaconing.
+Serial Monitor at 115200 prints the AP start result, SSID, IP, channel, TX
+power and mode. The OLED wiring in the sketch is SDA GPIO7 / SCL GPIO6.
