@@ -141,8 +141,8 @@ The project now includes a PlatformIO environment for the existing `C3Hotspot/C3
 
 - OLED VCC → 3V3
 - OLED GND → GND
-- OLED SCL → GPIO 6
-- OLED SDA → GPIO 7
+- OLED SCL → GPIO 7
+- OLED SDA → GPIO 6
 - I2C address: `0x3C`
 - Existing SH1106 1.3-inch panel offset and page-mode flush routine are retained.
 
