@@ -12,8 +12,8 @@ WiFi from a phone browser.
 |----------|---------------------|-------|
 | VCC      | 3V3                 | |
 | GND      | GND                 | |
-| SCK/SCL  | GPIO 7              | |
-| SDA      | GPIO 6              | |
+| SCK/SCL  | GPIO 6              | Matches the user's current wiring |
+| SDA      | GPIO 7              | Matches the user's current wiring |
 
 - OLED: SSD1306 **or** SH1106, 128×64, I2C `0x3C`
 - On-board LED: GPIO 8 (solid = client connected, slow blink = idle)
@@ -116,3 +116,13 @@ Board: **Nologo ESP32C3 Super Mini**, *USB CDC On Boot: Enabled*. Sketch uses
   regulator is marginal when the OLED is also powered from it.
 - AP on/off is not persisted, so a reboot always brings the hotspot back (and a
   60 s guard restores it automatically if there is no home-WiFi uplink).
+
+
+## Wi-Fi broadcast troubleshooting (firmware patch)
+
+The current firmware starts AP+STA with a conservative 8.5 dBm TX power,
+checks the return value of `WiFi.softAP()`, and retries in AP-only mode if
+AP+STA startup fails. It no longer runs an active Wi-Fi scan five seconds
+after boot, because that scan can temporarily interrupt hotspot beaconing.
+Serial Monitor at 115200 prints the AP start result, SSID, IP, channel, TX
+power and mode. The OLED wiring in the sketch is SDA GPIO7 / SCL GPIO6.
