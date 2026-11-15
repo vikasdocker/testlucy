@@ -37,9 +37,8 @@
 #include <esp_wifi.h>
 
 /* ---------------- pins ---------------- */
-// Match user's physical wiring: OLED SDA -> GPIO7, SCL -> GPIO6.
-#define I2C_SDA        7
-#define I2C_SCL        6
+#define I2C_SDA        6
+#define I2C_SCL        7
 #ifndef I2C_CLOCK
 #define I2C_CLOCK      100000    // drop to 50000 if the screen is still noisy
 #endif
