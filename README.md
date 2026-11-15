@@ -12,8 +12,8 @@ WiFi from a phone browser.
 |----------|---------------------|-------|
 | VCC      | 3V3                 | |
 | GND      | GND                 | |
-| SCK/SCL  | GPIO 6              | Matches the user's current wiring |
-| SDA      | GPIO 7              | Matches the user's current wiring |
+| SCK/SCL  | GPIO 7              | |
+| SDA      | GPIO 6              | |
 
 - OLED: SSD1306 **or** SH1106, 128×64, I2C `0x3C`
 - On-board LED: GPIO 8 (solid = client connected, slow blink = idle)
